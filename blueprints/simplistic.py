@@ -1,15 +1,16 @@
+import datetime
 import logging
 import random
-import uuid
 import string
-import datetime
+import uuid
 
 from flask import Blueprint, abort, current_app, jsonify, request
 from prometheus_client import Counter, Histogram, generate_latest
+from redis import RedisError
 
 from models import RequestLog
 from services import get_random
-from utils import get_now_time
+from utils import fibonacci, get_now_time
 
 simplistic_bp = Blueprint("simplistic", __name__)
 log = logging.getLogger(__name__)
@@ -44,6 +45,31 @@ def error() -> None:
     return "", random.choice(errors)
 
 
+@simplistic_bp.route("/fibo/<int:number>", methods=["GET"])
+def calculate(number: int) -> None:
+    """Emit prometheus metrics for being scrapped"""
+    if number < 10000:
+        inserted = False
+        if not hasattr(current_app, "redis_client"):
+            return jsonify({"result": int(fibonacci(number)), "status": "ok"})
+
+        try:
+            result = current_app.redis_client.get(number)
+            if not result:
+                result = fibonacci(number)
+                current_app.redis_client.set(f"{number}", str(result))
+                inserted = True
+        except RedisError as error:
+            log.error(f"Cache error: {error}")
+            abort(500)
+        else:
+            if inserted:
+                current_app.redis_client.persist(f"{number}")
+
+        return jsonify({"result": int(result), "status": "ok"})
+    abort(400)
+
+
 @simplistic_bp.route("/metrics", methods=["GET"])
 def metrics() -> None:
     """Emit prometheus metrics for being scrapped"""
@@ -65,7 +91,7 @@ def log_request(response) -> None:
 
     log.info(f"Request to {request.path} from {request.remote_addr}")
     # Log the request but don't store /metrics calls to avoid saturating the db
-    if "metrics" not in request.path:
+    if request.path in current_app.config.get("STORE_REQUEST_ENDPOINTS", ""):
         log_data = RequestLog(
             ip_address=request.remote_addr,
             endpoint=request.path,
@@ -78,10 +104,13 @@ def log_request(response) -> None:
 
     return response
 
+
 @simplistic_bp.route("/random", methods=["GET"])
 def get_random_json() -> None:
     fake = current_app.faker
-    message = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(64))
+    message = "".join(
+        random.choice(string.ascii_uppercase + string.digits) for _ in range(64)
+    )
     return jsonify(
         {
             "timestamp": datetime.datetime.now().isoformat(),

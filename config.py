@@ -13,12 +13,17 @@ class Config:
     DEBUG = False
     TESTING = False
     LOGFILE = ""
+    STORE_REQUEST_ENDPOINTS = ["/data"]
     REMOTE_RANDOM_URL = os.getenv("REMOTE_RANDOM_URL", "http://localhost/data")
+    USE_REDIS = env_as_bool("USE_REDIS", False)
+    REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+    REDIS_PORT = os.getenv("REDIS_PORT", 6379)
+    REDIS_DB = os.getenv("REDIS_DB", 5)
     DATABASE_USER = os.getenv("DATABASE_USER", "user")
     DATABASE_NAME = os.getenv("DATABASE_NAME", "simpleservice")
     DATABASE_PASS = os.getenv("DATABASE_PASS", "")
     DATABASE_PORT = int(os.getenv("DATABASE_PORT", 5432))
-    DATABASE_HOST = os.getenv("DATABASE_HOST", "host.containers.internal")
+    DATABASE_HOST = os.getenv("DATABASE_HOST", "localhost")
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "SQLALCHEMY_DATABASE_URI",
         (
@@ -36,7 +41,7 @@ class DevelopmentConfig(Config):
     USE_OTEL = env_as_bool("USE_OTEL", False)
     OTEL_SETTINGS = {
         "service_name": "simpleservice_flask",
-        "host": os.getenv("OTEL_SERVER", "host.containers.internal"),
+        "host": os.getenv("OTEL_SERVER", "localhost"),
         "port": os.getenv("OTEL_PORT", 6831),
         "traces": True,
         "logging": True,
@@ -49,7 +54,7 @@ class DevelopmentConfig(Config):
         "pool_size": 30,
         "max_overflow": 10,
         "echo": True,
-        "pool_recycle": 3600
+        "pool_recycle": 3600,
     }
 
 

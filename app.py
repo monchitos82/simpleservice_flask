@@ -1,16 +1,17 @@
 import logging
 import sys
 
+import redis
 from faker import Faker
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.sql import text
 from sqlalchemy import exc
+from sqlalchemy.sql import text
 
 from blueprints.simplistic import simplistic_bp
-from otel import setup_otel_logging, setup_otel_tracing, setup_otel_metrics
 from config import DevelopmentConfig
-from otel import JsonFormatter
+from otel import (JsonFormatter, setup_otel_logging, setup_otel_metrics,
+                  setup_otel_tracing)
 
 
 def create_app(config_class: object = DevelopmentConfig) -> object:
@@ -18,6 +19,7 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
     root.setLevel(logging.INFO)
 
     use_otel = DevelopmentConfig.USE_OTEL
+    use_redis = DevelopmentConfig.USE_REDIS
     json_handler = logging.StreamHandler(sys.stdout)
     json_handler.setFormatter(JsonFormatter())
     root.addHandler(json_handler)
@@ -27,6 +29,12 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
     app.logger = root
     app.faker = Faker()
     app.db.init_app(app)
+    if use_redis:
+        app.redis_client = redis.Redis(
+            host=app.config.get("REDIS_HOST"),
+            port=app.config.get("REDIS_PORT"),
+            db=app.config.get("REDIS_DB"),
+        )
     app.register_blueprint(simplistic_bp)
     if use_otel:
         try:
