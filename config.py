@@ -45,6 +45,12 @@ class DevelopmentConfig(Config):
     REMOTE_RANDOM_URL = os.getenv(
         "REMOTE_RANDOM_URL", "http://remote-service-fqdn/data"
     )
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_size": 30,
+        "max_overflow": 10,
+        "echo": True,
+        "pool_recycle": 3600
+    }
 
 
 class TestConfig(Config):
