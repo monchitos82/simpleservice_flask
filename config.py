@@ -29,24 +29,17 @@ class Config:
         os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS", False)
     )
     USE_OTEL = env_as_bool("USE_OTEL")
-    JAEGER_SETTINGS = {}
-    HONEYCOMB_SETTINGS = {}
 
 
 class DevelopmentConfig(Config):
     DEBUG = env_as_bool("DEBUG", False)
     USE_OTEL = env_as_bool("USE_OTEL", False)
-    use_jaeger = env_as_bool("USE_JAEGER")
-    JAEGER_SETTINGS = {
-        "USE_JAEGER": env_as_bool("USE_JAEGER"),
-        "host": os.getenv("JAEGER_SERVER", "host.containers.internal"),
-        "port": int(os.getenv("JAEGER_PORT", 6831)),
-    }
-    HONEYCOMB_SETTINGS = {
-        "USE_HONEYCOMB": env_as_bool("USE_HONEYCOMB"),
-        "HONEYCOMB_API": os.getenv("HONEYCOMB_API", "https://api.honeycomb.io:443"),
-        "HONEYCOMB_DATASET": os.getenv("HONEYCOMB_DATASET", "simpleservice"),
-        "HONEYCOMB_API_KEY": os.getenv("HONEYCOMB_API_KEY", ""),
+    OTEL_SETTINGS = {
+        "host": os.getenv("OTEL_SERVER", "host.containers.internal"),
+        "port": os.getenv("OTEL_PORT", 6831),
+        "traces": True,
+        "logging": True
+
     }
     REMOTE_RANDOM_URL = os.getenv(
         "REMOTE_RANDOM_URL", "http://remote-service-fqdn/data"

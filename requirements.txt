@@ -12,7 +12,7 @@ Flask==3.0.3
 Flask-SQLAlchemy==3.1.1
 googleapis-common-protos==1.59.1
 graypy==2.1.0
-greenlet==3.1.1
+greenlet
 grpcio==1.67.0
 hypercorn==0.17.3
 idna==3.10
@@ -26,9 +26,6 @@ MarkupSafe==3.0.1
 mypy-extensions==1.0.0
 opentelemetry-api==1.27.0
 opentelemetry-distro==0.48b0
-opentelemetry-exporter-jaeger==1.21.0
-opentelemetry-exporter-jaeger-proto-grpc==1.21.0
-opentelemetry-exporter-jaeger-thrift==1.21.0
 opentelemetry-exporter-otlp==1.27.0
 opentelemetry-exporter-otlp-proto-common==1.27.0
 opentelemetry-exporter-otlp-proto-grpc==1.27.0
