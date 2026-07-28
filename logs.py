@@ -23,7 +23,7 @@ class JsonFormatter(logging.Formatter):
 
 
 def setup_otel_logging(otel_settings: dict) -> None:
-    instance_id = os.getenv("POD_NAME"),
+    instance_id = os.getenv("POD_NAME", None),
     if not instance_id:
         instance_id = '1'
     resource = Resource.create(
