@@ -7,6 +7,8 @@ Most of the boilerplate on this project was generated using Chat-GPT and fixed b
 
 The credentials are dummy values, so I don't care if a scrapper collects them, they have no use but to be placeholders.
 
-As an extra, you will need a scrapper and a database in PostgreSQL but so far everything is working. If you prefer testing locally, just enable the Sqlite driver instead, this is how unit tests run, so be confident the results are quite similar.
+As an extra, you may need a scrapper and a database in PostgreSQL but so far everything is working. The database holds the requests so tracing actually happens beyond the API and the scrapper mention is in case you want to query the `/metrics` endpoint. This has been tested using an OTEL collector; so far all 3 pillars of observability are covered.
+
+If you prefer testing locally, just enable the Sqlite driver instead, this is how unit tests run, so be confident the results are quite similar.
 
 The downstream call was added into the `/data` call, nothing fancy, the remote service should return a string, for testing I just created another service with a call to random: ```''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))``` If there's no downstream, it can use the `/random` endpoint in this project.
