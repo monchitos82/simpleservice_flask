@@ -24,16 +24,17 @@ from logs import JsonFormatter
 
 def create_app(config_class: object = DevelopmentConfig) -> object:
     root = logging.getLogger()
+    root.setLevel(logging.INFO)
     use_otel = DevelopmentConfig.USE_OTEL
     json_handler = logging.StreamHandler(sys.stdout)
     json_handler.setFormatter(JsonFormatter())
     root.addHandler(json_handler)
-    if use_otel and DevelopmentConfig.OTEL_SETTINGS.get("logs", False):
+    if use_otel and DevelopmentConfig.OTEL_SETTINGS.get("logging", False):
         setup_otel_logging(otel_settings=DevelopmentConfig.OTEL_SETTINGS)
     app = Flask(__name__)
     app.db = SQLAlchemy()
     app.config.from_object(config_class)
-    app.logger = logging.getLogger(__name__)
+    app.logger = root
     registry = CollectorRegistry()
     app.faker = Faker()
     app.db.init_app(app)
