@@ -23,6 +23,7 @@ from logs import JsonFormatter
 def create_app(config_class: object = DevelopmentConfig) -> object:
     root = logging.getLogger()
     root.setLevel(logging.INFO)
+
     use_otel = DevelopmentConfig.USE_OTEL
     json_handler = logging.StreamHandler(sys.stdout)
     json_handler.setFormatter(JsonFormatter())

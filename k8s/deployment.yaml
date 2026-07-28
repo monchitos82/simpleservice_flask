@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simpleservice
+  namespace: apps
+  labels:
+    app: simpleservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simpleservice
+  template:
+    metadata:
+      labels:
+        app: simpleservice
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5200"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: simpleservice
+      containers:
+        - name: simpleservice
+          image: simpleservice  # Update this
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5200
+          env:
+            - name: REMOTE_RANDOM_URL
+              value: "http://simpleservice.apps.svc.cluster.local/random"
+            - name: DATABASE_USER
+              value: "simpleservice"
+            - name: DATABASE_HOST
+              value: "host.k3d.internal"  # k3d's host gateway
+            - name: DATABASE_PORT
+              value: "5432"
+            - name: DATABASE_NAME
+              value: "simpleservice"
+            - name: DATABASE_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: simpleservice-secrets
+                  key: DATABASE_PASS
+            - name: DEBUG
+              value: "True"
+            - name: USE_OTEL
+              value: "True"
+            - name: OTEL_SERVER
+              value: "host.k3d.internal"
+            - name: OTEL_PORT
+              value: "4317"
+            - name: PORT
+              value: "5200"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
