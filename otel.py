@@ -36,9 +36,7 @@ class JsonFormatter(logging.Formatter):
 
 
 def setup_otel_logging(otel_settings: dict, app: Flask) -> None:
-    instance_id = (os.getenv("POD_NAME", None),)
-    if not instance_id:
-        instance_id = "1"
+    instance_id = os.getenv("POD_NAME", 1)
     resource = Resource.create(
         {
             "service.name": otel_settings["service_name"],
@@ -85,9 +83,7 @@ def setup_otel_tracing(otel_settings: dict, app: Flask) -> None:
 
 
 def setup_otel_metrics(otel_settings: dict, app: Flask) -> None:
-    instance_id = (os.getenv("POD_NAME", None),)
-    if not instance_id:
-        instance_id = "1"
+    instance_id = os.getenv("POD_NAME", 1)
     resource = Resource.create(
         {
             "service.name": otel_settings["service_name"],
