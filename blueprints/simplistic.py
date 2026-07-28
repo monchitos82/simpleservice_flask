@@ -54,7 +54,7 @@ def calculate(number: int) -> None:
             return jsonify({"result": fibonacci(number), "status": "ok"})
 
         try:
-            result = int(current_app.redis_client.get(number))
+            result = current_app.redis_client.get(number)
             if not result:
                 result = fibonacci(number)
                 current_app.redis_client.set(f"{number}", str(result))
@@ -66,7 +66,7 @@ def calculate(number: int) -> None:
             if inserted:
                 current_app.redis_client.persist(f"{number}")
 
-        return jsonify({"result": result, "status": "ok"})
+        return jsonify({"result": int(result), "status": "ok"})
     abort(400)
 
 
