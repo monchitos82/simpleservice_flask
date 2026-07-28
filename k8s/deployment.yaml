@@ -68,7 +68,7 @@ spec:
             - name: DEBUG
               value: "True"
             - name: USE_OTEL
-              value: "True"
+              value: "False"
             - name: OTEL_SERVER
               value: "host.k3d.internal"
             - name: OTEL_PORT
