@@ -14,3 +14,13 @@ spec:
       port: 80
       targetPort: 5200
       nodePort: 30300
+
+# Change to use ingress if enabling TLS (requires renaming ingress.yaml and commenting the Nodeport spec)
+#spec:
+#  type: ClusterIP
+#  selector:
+#    app: simpleservice
+#  ports:
+#    - name: http
+#      port: 80
+#      targetPort: 5200
