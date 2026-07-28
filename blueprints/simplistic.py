@@ -51,7 +51,7 @@ def calculate(number: int) -> None:
     if number < 10000:
         inserted = False
         if not hasattr(current_app, "redis_client"):
-            return jsonify({"result": int(fibonacci(number)), "status": "ok"})
+            return jsonify({"result": fibonacci(number), "status": "ok"})
 
         try:
             result = current_app.redis_client.get(number)
@@ -66,7 +66,7 @@ def calculate(number: int) -> None:
             if inserted:
                 current_app.redis_client.persist(f"{number}")
 
-        return jsonify({"result": int(result), "status": "ok"})
+        return jsonify({"result": result, "status": "ok"})
     abort(400)
 
 

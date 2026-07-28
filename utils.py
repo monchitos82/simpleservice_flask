@@ -7,7 +7,7 @@ def get_now_time() -> object:
 
 
 def fibonacci(number: int = 0) -> int:
-    if number == 0:
+    if not number or number <= 0:
         return 0
     if number == 1:
         return 1
