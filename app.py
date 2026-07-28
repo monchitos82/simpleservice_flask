@@ -38,7 +38,7 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
 
                 if otel_settings.get("logging", False):
                     setup_otel_logging(otel_settings, app)
-                
+
                 if otel_settings.get("metrics", False):
                     setup_otel_metrics(otel_settings, app)
         except Exception as error:

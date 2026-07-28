@@ -101,14 +101,12 @@ def setup_otel_metrics(otel_settings: dict, app: Flask) -> None:
     reader = PeriodicExportingMetricReader(
         exporter=metric_exporter,
         export_interval_millis=3000.0,
-        export_timeout_millis=5000.0
+        export_timeout_millis=5000.0,
     )
     meter_provider = MeterProvider(metric_readers=[reader], resource=resource)
     metrics.set_meter_provider(meter_provider)
     meter = metrics.get_meter(__name__)
     counter = meter.create_counter(
-        name="requests",
-        description="Number of requests",
-        unit="1"
+        name="requests", description="Number of requests", unit="1"
     )
     app.counter = counter
