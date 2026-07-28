@@ -1,3 +1,4 @@
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -14,6 +15,21 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+
+DATABASE_USER = os.getenv("DATABASE_USER", "simpleservice")
+DATABASE_NAME = os.getenv("DATABASE_NAME", "simpleservice")
+DATABASE_PASS = os.getenv("DATABASE_PASS", "simpleservice")
+DATABASE_PORT = int(os.getenv("DATABASE_PORT", 5432))
+DATABASE_HOST = os.getenv("DATABASE_HOST", "localhost")
+SQLALCHEMY_DATABASE_URI = os.getenv(
+    "SQLALCHEMY_DATABASE_URI",
+    (
+        f"postgresql+psycopg2://{DATABASE_USER}:{DATABASE_PASS}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
+    ),
+)
+
+
+config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URI)
 
 target_metadata = Base.metadata
 
@@ -51,3 +67,4 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+

@@ -6,7 +6,7 @@ SERVER=${SERVER:-hypercorn}
 PORT=${PORT:-5200}
 WORKERS=${WORKERS:-4}
 
-if [[ "${BUILD_DB}" == "yes" ]]; then
+if [[ "${BUILD_DB}" != "" ]]; then
     uv alembic upgrade head
 fi
 

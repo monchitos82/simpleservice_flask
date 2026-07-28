@@ -19,9 +19,9 @@ class Config:
     REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT = os.getenv("REDIS_PORT", 6379)
     REDIS_DB = os.getenv("REDIS_DB", 5)
-    DATABASE_USER = os.getenv("DATABASE_USER", "user")
+    DATABASE_USER = os.getenv("DATABASE_USER", "simpleservice")
     DATABASE_NAME = os.getenv("DATABASE_NAME", "simpleservice")
-    DATABASE_PASS = os.getenv("DATABASE_PASS", "")
+    DATABASE_PASS = os.getenv("DATABASE_PASS", "simpleservice")
     DATABASE_PORT = int(os.getenv("DATABASE_PORT", 5432))
     DATABASE_HOST = os.getenv("DATABASE_HOST", "localhost")
     SQLALCHEMY_DATABASE_URI = os.getenv(

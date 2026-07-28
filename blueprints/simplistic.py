@@ -8,9 +8,13 @@ from flask import Blueprint, abort, current_app, jsonify, request
 from prometheus_client import Counter, Histogram, generate_latest
 from redis import RedisError
 
+from schemas import RequestLogSchema
 from models import RequestLog
 from services import get_random
 from utils import fibonacci, get_now_time
+
+from pydantic import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 
 simplistic_bp = Blueprint("simplistic", __name__)
 log = logging.getLogger(__name__)
@@ -91,16 +95,24 @@ def log_request(response) -> None:
 
     log.info(f"Request to {request.path} from {request.remote_addr}")
     # Log the request but don't store /metrics calls to avoid saturating the db
-    if request.path in current_app.config.get("STORE_REQUEST_ENDPOINTS", ""):
-        log_data = RequestLog(
-            ip_address=request.remote_addr,
-            endpoint=request.path,
-            method=request.method,
-            response_code=response.status_code,
-            timestamp=get_now_time(),
-        )
-        current_app.db.session.add(log_data)
-        current_app.db.session.commit()
+    try:
+        if request.path in current_app.config.get("STORE_REQUEST_ENDPOINTS", ""):
+            log_data = RequestLogSchema(
+                ip_address=request.remote_addr,
+                endpoint=request.path,
+                method=request.method,
+                response_code=response.status_code,
+                timestamp=get_now_time(),
+                scheme=request.scheme,
+            )
+
+            log_data_record = RequestLog(**log_data.model_dump(exclude={"id"}))
+
+            current_app.db.session.add(log_data_record)
+            current_app.db.session.commit()
+    except (ValidationError, SQLAlchemyError) as error:
+        log.error(f"Storing the request to {request.path} failed with error: {error}")
+        abort(500)
 
     return response
 
