@@ -21,7 +21,6 @@ REQUEST_LATENCY = Histogram("request_latency_seconds", "Request latency", ["endp
 @simplistic_bp.route("/data", methods=["GET", "POST"])
 def data() -> None:
     """Data endpoint returning a wrapped response from a downstream"""
-    log.debug(f"Received {request.method} request on /data")
     if request.method == "GET":
         try:
             return jsonify(
@@ -64,6 +63,7 @@ def log_request(response) -> None:
     REQUEST_LATENCY.labels(request.endpoint).observe(latency)
     REQUEST_COUNT.labels(request.endpoint, request.method).inc()
 
+    log.info(f"Request to {request.url.path} from {request.client.host}")
     # Log the request
     log_data = RequestLog(
         ip_address=request.remote_addr,
