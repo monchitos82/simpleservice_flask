@@ -9,7 +9,7 @@ import logging
 
 
 class JsonFormatter(logging.Formatter):
-    def format(self, record):
+    def format(self, record) -> dict:
         log_record = {
             "timestamp": record.created,
             "severity": record.levelname,
@@ -21,7 +21,7 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(log_record)
 
 
-def setup_otel_logging(otel_settings: dict):
+def setup_otel_logging(otel_settings: dict) -> None:
     resource = Resource.create(
         {
             "service.name": "simpleservice",
