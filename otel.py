@@ -41,8 +41,8 @@ def setup_otel_logging(otel_settings: dict, app: Flask) -> None:
         instance_id = "1"
     resource = Resource.create(
         {
-            "service.name": "simpleservice",
-            "service.instance.id": f"simpleservice-{instance_id}",
+            "service.name": otel_settings["service_name"],
+            "service.instance.id": f"{otel_settings['service_name']}-{instance_id}",
         }
     )
     logger_provider = LoggerProvider(resource=resource)
@@ -61,7 +61,7 @@ def setup_otel_logging(otel_settings: dict, app: Flask) -> None:
 def setup_otel_tracing(otel_settings: dict, app: Flask) -> None:
     resource = Resource.create(
         {
-            "service.name": "simpleservice",
+            "service.name": otel_settings["service_name"],
             "service.instance.id": os.getenv("POD_NAME", "Undefined"),
             "k8s.pod.name": os.getenv("POD_NAME", "Undefined"),
             "k8s.namespace.name": os.getenv("POD_NAMESPACE", "Undefined"),
@@ -90,8 +90,8 @@ def setup_otel_metrics(otel_settings: dict, app: Flask) -> None:
         instance_id = "1"
     resource = Resource.create(
         {
-            "service.name": "simpleservice",
-            "service.instance.id": f"simpleservice-{instance_id}",
+            "service.name": otel_settings["service_name"],
+            "service.instance.id": f"{otel_settings['service_name']}-{instance_id}",
         }
     )
     metric_exporter = OTLPMetricExporter(

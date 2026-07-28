@@ -35,6 +35,7 @@ class DevelopmentConfig(Config):
     DEBUG = env_as_bool("DEBUG", False)
     USE_OTEL = env_as_bool("USE_OTEL", False)
     OTEL_SETTINGS = {
+        "service_name": "simpleservice_flask",
         "host": os.getenv("OTEL_SERVER", "host.containers.internal"),
         "port": os.getenv("OTEL_PORT", 6831),
         "traces": True,
