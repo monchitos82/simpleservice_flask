@@ -21,7 +21,6 @@ dependencies = [
     "graypy==2.1.0",
     "greenlet>=3.3.2",
     "grpcio==1.67.0",
-    "gunicorn>=25.2.0",
     "hypercorn==0.17.3",
     "idna==3.10",
     "importlib-metadata==8.4.0",
