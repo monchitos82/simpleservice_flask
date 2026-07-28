@@ -40,7 +40,7 @@ spec:
                     app: simpleservice
                 topologyKey: kubernetes.io/hostname
       
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: 60
 
       containers:
         - name: simpleservice
@@ -68,7 +68,7 @@ spec:
             - name: DEBUG
               value: "True"
             - name: USE_OTEL
-              value: "False"
+              value: "True"
             - name: OTEL_SERVER
               value: "host.k3d.internal"
             - name: OTEL_PORT
@@ -105,17 +105,17 @@ spec:
             httpGet:
               path: /health
               port: 5200
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 10
           
           readinessProbe:
             httpGet:
               path: /ready
               port: 5200
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            timeoutSeconds: 10
-            failureThreshold: 3
+            initialDelaySeconds: 130
+            periodSeconds: 15
+            timeoutSeconds: 15
+            failureThreshold: 10
             successThreshold: 1
