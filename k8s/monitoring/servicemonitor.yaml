@@ -4,7 +4,7 @@ metadata:
   name: simpleservice
   namespace: apps
   labels:
-    release: prometheus-operator  # Match your helm release name
+    release: prometheus-operator
 spec:
   selector:
     matchLabels:
