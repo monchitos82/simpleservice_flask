@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: simpleservice-alerts
+  namespace: apps
+  labels:
+    release: prometheus-operator
+spec:
+  groups:
+    - name: simpleservice
+      interval: 30s
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(request_count_total{response_code=~"5.."}[5m])) 
+            / 
+            sum(rate(request_count_total[5m])) > 0.05
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High error rate"
