@@ -25,7 +25,7 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
 
 class JsonFormatter(logging.Formatter):
-    def format(self, record) -> dict:
+    def format(self, record) -> str:
         log_record = {
             "timestamp": record.created,
             "severity": record.levelname,
@@ -43,7 +43,7 @@ def setup_otel_instrumentation(app: Flask) -> None:
         SQLAlchemyInstrumentor().instrument(engine=app.db.engine)
         RedisInstrumentor().instrument()
     except Exception as error:
-        app.logger.error(f"Instrumentation setup failed. Error: {error}") 
+        app.logger.error(f"Instrumentation setup failed. Error: {error}")
 
 
 def setup_otel_logging(otel_settings: dict, app: Flask) -> None:
