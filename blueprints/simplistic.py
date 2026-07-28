@@ -63,7 +63,7 @@ def log_request(response) -> None:
     REQUEST_LATENCY.labels(request.endpoint).observe(latency)
     REQUEST_COUNT.labels(request.endpoint, request.method).inc()
 
-    log.info(f"Request to {request.url.path} from {request.client.host}")
+    log.info(f"Request to {request.path} from {request.remote_addr}")
     # Log the request
     log_data = RequestLog(
         ip_address=request.remote_addr,
