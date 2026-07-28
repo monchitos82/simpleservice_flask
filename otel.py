@@ -36,6 +36,15 @@ class JsonFormatter(logging.Formatter):
         }
         return json.dumps(log_record)
 
+def setup_otel_instrumentation(app: Flask) -> None:
+    try:
+        RequestsInstrumentor().instrument()
+        FlaskInstrumentor().instrument_app(app)
+        SQLAlchemyInstrumentor().instrument(engine=app.db.engine)
+        RedisInstrumentor().instrument()
+    except Exception as error:
+        app.logger.error(f"Instrumentation setup failed. Error: {error}") 
+
 
 def setup_otel_logging(otel_settings: dict, app: Flask) -> None:
     instance_id = os.getenv("POD_NAME", 1)
@@ -78,11 +87,6 @@ def setup_otel_tracing(otel_settings: dict, app: Flask) -> trace:
     trace.get_tracer_provider().add_span_processor(
         SimpleSpanProcessor(otlp_tracing_exporter)
     )
-
-    RequestsInstrumentor().instrument()
-    FlaskInstrumentor().instrument_app(app)
-    SQLAlchemyInstrumentor().instrument(engine=app.db.engine)
-    RedisInstrumentor().instrument()
     return trace
 
 

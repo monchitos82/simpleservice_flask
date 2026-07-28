@@ -10,9 +10,13 @@ from sqlalchemy.sql import text
 
 from blueprints.simplistic import simplistic_bp
 from config import DevelopmentConfig
-from otel import (JsonFormatter, setup_otel_logging, setup_otel_metrics,
-                  setup_otel_tracing)
-
+from otel import (
+    JsonFormatter,
+    setup_otel_instrumentation,
+    setup_otel_logging,
+    setup_otel_metrics,
+    setup_otel_tracing
+)
 
 def create_app(config_class: object = DevelopmentConfig) -> object:
     root = logging.getLogger()
@@ -48,6 +52,7 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
 
                 if otel_settings.get("metrics", False):
                     app.meter = setup_otel_metrics(otel_settings, app)
+                setup_otel_instrumentation(app)
         except Exception as error:
             app.logger.error(f"OTEL instrumentation setup failed: {error}")
 
