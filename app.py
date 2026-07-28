@@ -12,9 +12,7 @@ from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import (BatchSpanProcessor,
-                                            SimpleSpanProcessor)
-from prometheus_client import CollectorRegistry
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
 from blueprints.simplistic import simplistic_bp
 from logs import setup_otel_logging
@@ -29,13 +27,10 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
     json_handler = logging.StreamHandler(sys.stdout)
     json_handler.setFormatter(JsonFormatter())
     root.addHandler(json_handler)
-    if use_otel and DevelopmentConfig.OTEL_SETTINGS.get("logging", False):
-        setup_otel_logging(otel_settings=DevelopmentConfig.OTEL_SETTINGS)
     app = Flask(__name__)
     app.db = SQLAlchemy()
     app.config.from_object(config_class)
     app.logger = root
-    registry = CollectorRegistry()
     app.faker = Faker()
     app.db.init_app(app)
     app.register_blueprint(simplistic_bp)
@@ -44,7 +39,6 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
             with app.app_context():
                 resource = Resource.create({"service.name": "simpleservice"})
                 trace.set_tracer_provider(TracerProvider(resource=resource))
-                tracer = trace.get_tracer(__name__)
                 otel_settings = app.config.get("OTEL_SETTINGS")
                 if otel_settings.get("traces", False):
                     otlp_tracing_exporter = OTLPSpanExporter(
@@ -58,6 +52,9 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
                     RequestsInstrumentor().instrument()
                     FlaskInstrumentor().instrument_app(app)
                     SQLAlchemyInstrumentor().instrument(engine=app.db.engine)
+
+                if otel_settings.get("logging", False):
+                    setup_otel_logging(otel_settings)
         except Exception as error:
             app.logger.error(f"OTEL instrumentation setup failed: {error}")
     return app
