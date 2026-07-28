@@ -64,16 +64,17 @@ def log_request(response) -> None:
     REQUEST_COUNT.labels(request.endpoint, request.method).inc()
 
     log.info(f"Request to {request.path} from {request.remote_addr}")
-    # Log the request
-    log_data = RequestLog(
-        ip_address=request.remote_addr,
-        endpoint=request.path,
-        method=request.method,
-        response_code=response.status_code,
-        timestamp=get_now_time(),
-    )
-    current_app.db.session.add(log_data)
-    current_app.db.session.commit()
+    # Log the request but don't store /metrics calls to avoid saturating the db
+    if "metrics" not in request.path:
+        log_data = RequestLog(
+            ip_address=request.remote_addr,
+            endpoint=request.path,
+            method=request.method,
+            response_code=response.status_code,
+            timestamp=get_now_time(),
+        )
+        current_app.db.session.add(log_data)
+        current_app.db.session.commit()
 
     return response
 
