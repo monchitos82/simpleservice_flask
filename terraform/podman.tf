@@ -12,8 +12,9 @@ resource "podman_container" "simpleservice" {
     REDIS_HOST        = var.redis_host
     REDIS_PORT        = var.redis_port
     REDIS_DB          = 5
-    DEBUG             = "True"
-    USE_OTEL          = "True"
+    DEBUG             = true
+    USE_OTEL          = true
+    USE_REDIS         = true
     OTEL_SERVER       = var.otel_host
     OTEL_PORT         = var.otel_port
     PORT              = var.service_port
