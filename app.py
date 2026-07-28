@@ -8,7 +8,7 @@ from sqlalchemy.sql import text
 from sqlalchemy import exc
 
 from blueprints.simplistic import simplistic_bp
-from otel import setup_otel_logging, setup_otel_tracing
+from otel import setup_otel_logging, setup_otel_tracing, setup_otel_metrics
 from config import DevelopmentConfig
 from otel import JsonFormatter
 
@@ -26,6 +26,7 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
     app.config.from_object(config_class)
     app.logger = root
     app.faker = Faker()
+    app.counter = None
     app.db.init_app(app)
     app.register_blueprint(simplistic_bp)
     if use_otel:
@@ -37,15 +38,22 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
 
                 if otel_settings.get("logging", False):
                     setup_otel_logging(otel_settings, app)
+                
+                if otel_settings.get("metrics", False):
+                    setup_otel_metrics(otel_settings, app)
         except Exception as error:
             app.logger.error(f"OTEL instrumentation setup failed: {error}")
 
     @app.route("/health")
     def health():
+        if hasattr(app, "counter"):
+            app.counter.add(1, {"endpoint": "health"})
         return {"status": "healthy"}, 200
 
     @app.route("/ready")
     def ready():
+        if hasattr(app, "counter"):
+            app.counter.add(1, {"endpoint": "ready"})
         try:
             app.db.session.execute(text("SELECT 1"))
         except exc.SQLAlchemyError:

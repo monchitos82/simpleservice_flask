@@ -10,6 +10,10 @@ from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry import metrics
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from flask import Flask
 
 
@@ -78,3 +82,33 @@ def setup_otel_tracing(otel_settings: dict, app: Flask) -> None:
     RequestsInstrumentor().instrument()
     FlaskInstrumentor().instrument_app(app)
     SQLAlchemyInstrumentor().instrument(engine=app.db.engine)
+
+
+def setup_otel_metrics(otel_settings: dict, app: Flask) -> None:
+    instance_id = (os.getenv("POD_NAME", None),)
+    if not instance_id:
+        instance_id = "1"
+    resource = Resource.create(
+        {
+            "service.name": "simpleservice",
+            "service.instance.id": f"simpleservice-{instance_id}",
+        }
+    )
+    metric_exporter = OTLPMetricExporter(
+        endpoint=f"{otel_settings["host"]}:{otel_settings["port"]}",
+        insecure=True,
+    )
+    reader = PeriodicExportingMetricReader(
+        exporter=metric_exporter,
+        export_interval_millis=3000.0,
+        export_timeout_millis=5000.0
+    )
+    meter_provider = MeterProvider(metric_readers=[reader], resource=resource)
+    metrics.set_meter_provider(meter_provider)
+    meter = metrics.get_meter(__name__)
+    counter = meter.create_counter(
+        name="requests",
+        description="Number of requests",
+        unit="1"
+    )
+    app.counter = counter
