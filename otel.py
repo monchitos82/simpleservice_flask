@@ -67,7 +67,7 @@ def setup_otel_logging(otel_settings: dict, app: Flask) -> None:
     app.logger.addHandler(handler)
 
 
-def setup_otel_tracing(otel_settings: dict, app: Flask) -> trace:
+def setup_otel_tracing(otel_settings: dict, app: Flask) -> trace.Tracer:
     resource = Resource.create(
         {
             "service.name": otel_settings["service_name"],
@@ -87,11 +87,11 @@ def setup_otel_tracing(otel_settings: dict, app: Flask) -> trace:
     trace.get_tracer_provider().add_span_processor(
         SimpleSpanProcessor(otlp_tracing_exporter)
     )
-    return trace
+    return trace.get_tracer(otel_settings["service_name"])
 
 
-def setup_otel_metrics(otel_settings: dict, app: Flask) -> metrics:
-    instance_id = os.getenv("POD_NAME", 1)
+def setup_otel_metrics(otel_settings: dict, app: Flask) -> metrics.Meter:
+    instance_id = os.getenv("POD_NAME", "Undefined")
     resource = Resource.create(
         {
             "service.name": otel_settings["service_name"],
@@ -114,4 +114,4 @@ def setup_otel_metrics(otel_settings: dict, app: Flask) -> metrics:
         name="requests", description="Number of requests", unit="1"
     )
     app.counter = counter
-    return metrics
+    return meter

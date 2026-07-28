@@ -5,6 +5,7 @@ import string
 import uuid
 
 from flask import Blueprint, abort, current_app, jsonify, request
+from flask.typing import ResponseReturnValue
 from prometheus_client import Counter, Histogram, generate_latest
 from pydantic import ValidationError
 from redis import RedisError
@@ -29,7 +30,7 @@ def start_timer() -> None:
 
 
 @simplistic_bp.after_request
-def log_request(response) -> None:
+def log_request(response) -> ResponseReturnValue:
     """Write the request details into the database"""
     latency = (get_now_time() - request.start_time).total_seconds()
     REQUEST_LATENCY.labels(request.endpoint).observe(latency)
@@ -60,8 +61,9 @@ def log_request(response) -> None:
 
 
 @simplistic_bp.route("/data", methods=["GET", "POST"])
-def data() -> None:
+def data() -> ResponseReturnValue:
     """Data endpoint returning a wrapped response from a downstream"""
+
     if request.method == "GET":
         try:
             return jsonify(
@@ -71,7 +73,7 @@ def data() -> None:
                     )
                 }
             )
-        except (TypeError, ValueError, Exception) as error:
+        except (TypeError, ValueError, KeyError, Exception) as error:
             log.error(f"Downstream call failed with error: {error}")
             abort(503)
     elif request.method == "POST":
@@ -79,14 +81,14 @@ def data() -> None:
 
 
 @simplistic_bp.route("/errors", methods=["GET"])
-def error() -> None:
+def error() -> ResponseReturnValue:
     """Return a random HTTP error"""
     errors = [400, 401, 404, 419, 429, 500, 503]
     return "", random.choice(errors)
 
 
 @simplistic_bp.route("/fibo/<int:number>", methods=["GET"])
-def calculate(number: int) -> None:
+def calculate(number: int) -> ResponseReturnValue:
     """Emit prometheus metrics for being scrapped"""
     if number < 10000:
         inserted = False
@@ -111,20 +113,20 @@ def calculate(number: int) -> None:
 
 
 @simplistic_bp.route("/metrics", methods=["GET"])
-def metrics() -> None:
+def metrics() -> ResponseReturnValue:
     """Emit prometheus metrics for being scrapped"""
     return generate_latest(), 200
 
 
 @simplistic_bp.route("/random", methods=["GET"])
-def get_random_json() -> None:
+def get_random_json() -> ResponseReturnValue:
     fake = current_app.faker
     message = "".join(
         random.choice(string.ascii_uppercase + string.digits) for _ in range(64)
     )
     return jsonify(
         {
-            "timestamp": datetime.datetime.now().isoformat(),
+            "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
             "id": str(uuid.uuid4()),
             "email": fake.email(),
             "score": round(random.uniform(0, 100), 2),
