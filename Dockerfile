@@ -15,6 +15,7 @@ USER simpleservice
 WORKDIR /opt/simpleservice
 
 COPY --chown=simpleservice:simpleservice . .
+
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/opt/simpleservice/.local/bin:$PATH"
 

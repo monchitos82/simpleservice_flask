@@ -35,5 +35,5 @@ resource "podman_container" "simpleservice" {
 
 output "captured_container_name" {
   description = "The name of the container that was created"
-  value       = podman_container.simpleservice.name
+  value       = podman_container.simpleservice
 }

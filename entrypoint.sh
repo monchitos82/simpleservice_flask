@@ -10,6 +10,9 @@ if [[ "${BUILD_DB}" == "yes" ]]; then
     uv alembic upgrade head
 fi
 
-uv run ${SERVER} asgi:app --bind 0.0.0.0:${PORT} --workers ${WORKERS} &
+trap "kill \$BGPID; wait \$BGPID; echo 'server stopped by SIGTERM'; exit 0" SIGINT SIGTERM
+exec uv run ${SERVER} asgi:app --bind 0.0.0.0:${PORT} --workers ${WORKERS} &
+BGPID=$!
 
-sleep infinity
+wait $BGPID
+#sleep infinity
