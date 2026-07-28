@@ -58,7 +58,7 @@ def setup_otel_logging(otel_settings: dict, app: Flask) -> None:
     app.logger.addHandler(handler)
 
 
-def setup_otel_tracing(otel_settings: dict, app: Flask) -> None:
+def setup_otel_tracing(otel_settings: dict, app: Flask) -> trace:
     resource = Resource.create(
         {
             "service.name": otel_settings["service_name"],
@@ -83,9 +83,10 @@ def setup_otel_tracing(otel_settings: dict, app: Flask) -> None:
     FlaskInstrumentor().instrument_app(app)
     SQLAlchemyInstrumentor().instrument(engine=app.db.engine)
     RedisInstrumentor().instrument()
+    return trace
 
 
-def setup_otel_metrics(otel_settings: dict, app: Flask) -> None:
+def setup_otel_metrics(otel_settings: dict, app: Flask) -> metrics:
     instance_id = os.getenv("POD_NAME", 1)
     resource = Resource.create(
         {
@@ -109,3 +110,4 @@ def setup_otel_metrics(otel_settings: dict, app: Flask) -> None:
         name="requests", description="Number of requests", unit="1"
     )
     app.counter = counter
+    return metrics

@@ -41,13 +41,13 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
             with app.app_context():
                 otel_settings = app.config.get("OTEL_SETTINGS")
                 if otel_settings.get("traces", False):
-                    setup_otel_tracing(otel_settings, app)
+                    app.trace = setup_otel_tracing(otel_settings, app)
 
                 if otel_settings.get("logging", False):
                     setup_otel_logging(otel_settings, app)
 
                 if otel_settings.get("metrics", False):
-                    setup_otel_metrics(otel_settings, app)
+                    app.meter = setup_otel_metrics(otel_settings, app)
         except Exception as error:
             app.logger.error(f"OTEL instrumentation setup failed: {error}")
 

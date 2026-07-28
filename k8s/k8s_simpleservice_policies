@@ -1,0 +1,27 @@
+# export the secret as env variable before running this script
+#
+# enable vault and write policies
+kubectl exec -n vault vault-0 -- vault auth enable kubernetes
+kubectl exec -n vault vault-0 -- vault write auth/kubernetes/config kubernetes_host="https://kubernetes.default.svc:443"
+
+# write the secret
+kubectl exec -n vault vault-0 -- vault kv put secret/simpleservice db_password=${SIMPLESERVICEPASSWORD}
+
+# bind the role
+kubectl exec -n vault vault-0 -- vault write auth/kubernetes/role/simpleservice bound_service_account_names=simpleservice bound_service_account_namespaces=apps policies=simpleservice ttl=24h
+
+# validate the pass is in the vault
+kubectl exec -n vault vault-0 -- vault kv get secret/simpleservice
+
+SA_TOKEN=$(kubectl create token simpleservice -n apps --duration=1h)
+
+kubectl exec -n vault vault-0 -- vault write auth/kubernetes/login role=simpleservice jwt=$SA_TOKEN
+
+cat <<EOF | kubectl exec -i -n vault vault-0 -- vault policy write simpleservice -
+  path "secret/data/simpleservice" {
+  capabilities = ["read"]
+}
+EOF
+
+# validate the pass is in the external secret
+kubectl get secret simpleservice-secrets -n apps -o jsonpath='{.data.DATABASE_PASS}' | base64 -d; echo

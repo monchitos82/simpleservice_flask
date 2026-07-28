@@ -2,21 +2,24 @@
 FROM python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    VIRTUAL_ENV=/opt/venv
+    PYTHONUNBUFFERED=1
 
-WORKDIR /simpleservice
-RUN python -m venv $VIRTUAL_ENV
 RUN apt-get update && apt-get install -y \
     build-essential libpq-dev curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN /opt/venv/bin/pip install --upgrade pip && /opt/venv/bin/pip install -r requirements.txt
+RUN groupadd simpleservice
+RUN useradd simpleservice -g simpleservice -m -d /opt/simpleservice
 
-# run the project
-ARG BUILD_DB
-COPY . .
+USER simpleservice
+WORKDIR /opt/simpleservice
 
-WORKDIR /simpleservice
-CMD ["/simpleservice/entrypoint.sh"]
+COPY --chown=simpleservice:simpleservice . .
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/opt/simpleservice/.local/bin:$PATH"
+
+RUN uv sync --frozen
+RUN pwd
+RUN ls -la
+
+CMD ["/opt/simpleservice/entrypoint.sh"]
