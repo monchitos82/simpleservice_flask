@@ -4,7 +4,7 @@ def test_data_get(client, init_db) -> None:
     assert "remote_random_data" in response.get_json()
 
 
-def test_fibo_get(client) -> None:
+def test_fibo_get(client, init_db) -> None:
     response = client.get("/fibo/6")
     assert response.status_code == 200
     assert response.get_json().get("result", None) == 8
