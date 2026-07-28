@@ -26,7 +26,6 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
     app.config.from_object(config_class)
     app.logger = root
     app.faker = Faker()
-    app.counter = None
     app.db.init_app(app)
     app.register_blueprint(simplistic_bp)
     if use_otel:
