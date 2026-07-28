@@ -1,8 +1,9 @@
 import logging
 import sys
+import os
 
 from faker import Faker
-from flask import Flask
+from flask import Flask, abort
 from flask_sqlalchemy import SQLAlchemy
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import \
@@ -38,7 +39,14 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
     if use_otel:
         try:
             with app.app_context():
-                resource = Resource.create({"service.name": "simpleservice"})
+                resource = Resource.create({
+                    "service.name": "simpleservice",
+                    "service.instance.id": os.getenv("POD_NAME"),
+                    "k8s.pod.name": os.getenv("POD_NAME"),
+                    "k8s.namespace.name": os.getenv("POD_NAMESPACE"),
+                    "k8s.pod.ip": os.getenv("POD_IP"),
+                    "k8s.node.name": os.getenv("NODE_NAME"),
+                })
                 trace.set_tracer_provider(TracerProvider(resource=resource))
                 otel_settings = app.config.get("OTEL_SETTINGS")
                 if otel_settings.get("traces", False):
@@ -58,4 +66,16 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
                     setup_otel_logging(otel_settings)
         except Exception as error:
             app.logger.error(f"OTEL instrumentation setup failed: {error}")
-    return app
+    
+    @app.route('/health')
+    def health():
+        return {'status': 'healthy'}, 200
+    
+    @app.route('/ready')
+    def ready():
+        try:
+            app.db.session.execute('SELECT 1')
+        except:
+            return {'status': 'not ready'}, 503
+        else:
+            return {'status': 'ready'}, 200

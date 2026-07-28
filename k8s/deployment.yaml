@@ -6,20 +6,42 @@ metadata:
   labels:
     app: simpleservice
 spec:
-  replicas: 1
+  replicas: 2
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
   selector:
     matchLabels:
       app: simpleservice
+
   template:
     metadata:
       labels:
         app: simpleservice
+        version: v1.0
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "5200"
         prometheus.io/path: "/metrics"
     spec:
       serviceAccountName: simpleservice
+
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: simpleservice
+                topologyKey: kubernetes.io/hostname
+      
+      terminationGracePeriodSeconds: 30
+
       containers:
         - name: simpleservice
           image: simpleservice  # Update this
@@ -53,6 +75,24 @@ spec:
               value: "4317"
             - name: PORT
               value: "5200"
+
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+
           resources:
             requests:
               cpu: 50m
@@ -60,3 +100,22 @@ spec:
             limits:
               cpu: 200m
               memory: 1024Mi
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5200
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 5200
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1

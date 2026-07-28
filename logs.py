@@ -6,6 +6,7 @@ from opentelemetry.sdk.resources import Resource
 
 import json
 import logging
+import os
 
 
 class JsonFormatter(logging.Formatter):
@@ -22,10 +23,13 @@ class JsonFormatter(logging.Formatter):
 
 
 def setup_otel_logging(otel_settings: dict) -> None:
+    instance_id = os.getenv("POD_NAME"),
+    if not instance_id:
+        instance_id = '1'
     resource = Resource.create(
         {
             "service.name": "simpleservice",
-            "service.instance.id": "simpleservice-1"
+            "service.instance.id": f"simpleservice-{instance_id}"
         }
     )
     logger_provider = LoggerProvider(resource=resource)
