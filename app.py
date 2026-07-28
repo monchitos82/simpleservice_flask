@@ -1,24 +1,16 @@
 import logging
 import sys
-import os
 
 from faker import Faker
-from flask import Flask, abort
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import \
-    OTLPSpanExporter
-from opentelemetry.instrumentation.flask import FlaskInstrumentor
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from sqlalchemy.sql import text
+from sqlalchemy import exc
 
 from blueprints.simplistic import simplistic_bp
-from logs import setup_otel_logging
+from otel import setup_otel_logging, setup_otel_tracing
 from config import DevelopmentConfig
-from logs import JsonFormatter
+from otel import JsonFormatter
 
 
 def create_app(config_class: object = DevelopmentConfig) -> object:
@@ -39,40 +31,26 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
     if use_otel:
         try:
             with app.app_context():
-                resource = Resource.create({
-                    "service.name": "simpleservice",
-                    "service.instance.id": os.getenv("POD_NAME", "Undefined"),
-                    "k8s.pod.name": os.getenv("POD_NAME", "Undefined"),
-                    "k8s.namespace.name": os.getenv("POD_NAMESPACE", "Undefined"),
-                    "k8s.pod.ip": os.getenv("POD_IP", "Undefined"),
-                    "k8s.node.name": os.getenv("NODE_NAME", "Undefined"),
-                })
-                trace.set_tracer_provider(TracerProvider(resource=resource))
                 otel_settings = app.config.get("OTEL_SETTINGS")
                 if otel_settings.get("traces", False):
-                    otlp_tracing_exporter = OTLPSpanExporter(
-                        endpoint=f"{otel_settings["host"]}:{otel_settings["port"]}",
-                        insecure=True
-                    )
-                    trace.get_tracer_provider().add_span_processor(
-                        SimpleSpanProcessor(otlp_tracing_exporter)
-                    )
-
-                    RequestsInstrumentor().instrument()
-                    FlaskInstrumentor().instrument_app(app)
-                    SQLAlchemyInstrumentor().instrument(engine=app.db.engine)
+                    setup_otel_tracing(otel_settings, app)
 
                 if otel_settings.get("logging", False):
-                    setup_otel_logging(otel_settings)
+                    setup_otel_logging(otel_settings, app)
         except Exception as error:
             app.logger.error(f"OTEL instrumentation setup failed: {error}")
-    
-    @app.route('/health')
+
+    @app.route("/health")
     def health():
-        return {'status': 'healthy'}, 200
-    
-    @app.route('/ready')
+        return {"status": "healthy"}, 200
+
+    @app.route("/ready")
     def ready():
-        return {'status': 'ready'}, 200
-    
+        try:
+            app.db.session.execute(text("SELECT 1"))
+        except exc.SQLAlchemyError:
+            return {"status": "not ready"}, 503
+        else:
+            return {"status": "ready"}, 200
+
     return app

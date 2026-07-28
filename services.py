@@ -5,6 +5,7 @@ import requests
 
 log = logging.getLogger(__name__)
 
+
 def get_random(remote_url: str) -> dict:
     """Return a dictionary with the response of a downstream"""
     remote_data = str(uuid.uuid4())
