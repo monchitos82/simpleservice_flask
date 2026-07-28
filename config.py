@@ -2,7 +2,7 @@ import os
 
 
 def env_as_bool(value: str, default: bool = False) -> bool:
-    """ os.getenv of a boolean will return a string that casts to True """
+    """os.getenv of a boolean will return a string that casts to True"""
     str_val = os.getenv(value, "False")
     if str_val.lower() == "true":
         return True
@@ -40,8 +40,7 @@ class DevelopmentConfig(Config):
         "port": os.getenv("OTEL_PORT", 6831),
         "traces": True,
         "logging": True,
-        "metrics": True
-
+        "metrics": True,
     }
     REMOTE_RANDOM_URL = os.getenv(
         "REMOTE_RANDOM_URL", "http://remote-service-fqdn/data"
