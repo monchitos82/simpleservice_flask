@@ -22,6 +22,44 @@ REQUEST_COUNT = Counter("request_count", "Total Request Count", ["endpoint", "me
 REQUEST_LATENCY = Histogram("request_latency_seconds", "Request latency", ["endpoint"])
 
 
+@simplistic_bp.before_request
+def start_timer() -> None:
+    """Set the start time of a request"""
+    request.start_time = get_now_time()
+
+
+@simplistic_bp.after_request
+def log_request(response) -> None:
+    """Write the request details into the database"""
+    latency = (get_now_time() - request.start_time).total_seconds()
+    REQUEST_LATENCY.labels(request.endpoint).observe(latency)
+    REQUEST_COUNT.labels(request.endpoint, request.method).inc()
+
+    log.info(f"Request to {request.path} from {request.remote_addr}")
+    # Log the request but don't store /metrics calls to avoid saturating the db
+    try:
+        log_paths = current_app.config.get("STORE_REQUEST_ENDPOINTS", [])
+        if any((log_path in request.path for log_path in log_paths)):
+            log_data = RequestLogSchema(
+                ip_address=request.remote_addr,
+                endpoint=request.path,
+                method=request.method,
+                response_code=response.status_code,
+                timestamp=get_now_time(),
+                scheme=request.scheme,
+            )
+
+            log_data_record = RequestLog(**log_data.model_dump(exclude={"id"}))
+
+            current_app.db.session.add(log_data_record)
+            current_app.db.session.commit()
+    except (ValidationError, SQLAlchemyError) as error:
+        log.error(f"Storing the request to {request.path} failed with error: {error}")
+        abort(500)
+
+    return response
+
+
 @simplistic_bp.route("/data", methods=["GET", "POST"])
 def data() -> None:
     """Data endpoint returning a wrapped response from a downstream"""
@@ -77,43 +115,6 @@ def calculate(number: int) -> None:
 def metrics() -> None:
     """Emit prometheus metrics for being scrapped"""
     return generate_latest(), 200
-
-
-@simplistic_bp.before_request
-def start_timer() -> None:
-    """Set the start time of a request"""
-    request.start_time = get_now_time()
-
-
-@simplistic_bp.after_request
-def log_request(response) -> None:
-    """Write the request details into the database"""
-    latency = (get_now_time() - request.start_time).total_seconds()
-    REQUEST_LATENCY.labels(request.endpoint).observe(latency)
-    REQUEST_COUNT.labels(request.endpoint, request.method).inc()
-
-    log.info(f"Request to {request.path} from {request.remote_addr}")
-    # Log the request but don't store /metrics calls to avoid saturating the db
-    try:
-        if request.path in current_app.config.get("STORE_REQUEST_ENDPOINTS", ""):
-            log_data = RequestLogSchema(
-                ip_address=request.remote_addr,
-                endpoint=request.path,
-                method=request.method,
-                response_code=response.status_code,
-                timestamp=get_now_time(),
-                scheme=request.scheme,
-            )
-
-            log_data_record = RequestLog(**log_data.model_dump(exclude={"id"}))
-
-            current_app.db.session.add(log_data_record)
-            current_app.db.session.commit()
-    except (ValidationError, SQLAlchemyError) as error:
-        log.error(f"Storing the request to {request.path} failed with error: {error}")
-        abort(500)
-
-    return response
 
 
 @simplistic_bp.route("/random", methods=["GET"])
