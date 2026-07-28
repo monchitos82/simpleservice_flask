@@ -13,7 +13,7 @@ class Config:
     DEBUG = False
     TESTING = False
     LOGFILE = ""
-    STORE_REQUEST_ENDPOINTS = ["/data", "/fibo"]
+    STORE_REQUEST_ENDPOINTS = ("/data", "/fibo")
     REMOTE_RANDOM_URL = os.getenv("REMOTE_RANDOM_URL", "http://localhost/random")
     USE_REDIS = env_as_bool("USE_REDIS", False)
     REDIS_HOST = os.getenv("REDIS_HOST", "localhost")

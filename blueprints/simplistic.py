@@ -38,8 +38,7 @@ def log_request(response) -> None:
     log.info(f"Request to {request.path} from {request.remote_addr}")
     # Log the request but don't store /metrics calls to avoid saturating the db
     try:
-        log_paths = current_app.config.get("STORE_REQUEST_ENDPOINTS", [])
-        if any((log_path in request.path for log_path in log_paths)):
+        if request.path.startswith(current_app.config.get("STORE_REQUEST_ENDPOINTS", " ")):
             log_data = RequestLogSchema(
                 ip_address=request.remote_addr,
                 endpoint=request.path,
@@ -53,7 +52,7 @@ def log_request(response) -> None:
 
             current_app.db.session.add(log_data_record)
             current_app.db.session.commit()
-    except (ValidationError, SQLAlchemyError) as error:
+    except (TypeError, ValidationError, SQLAlchemyError) as error:
         log.error(f"Storing the request to {request.path} failed with error: {error}")
         abort(500)
 
