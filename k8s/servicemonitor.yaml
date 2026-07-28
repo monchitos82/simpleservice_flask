@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: simpleservice
+  namespace: apps
+  labels:
+    release: prometheus-operator  # Match your helm release name
+spec:
+  selector:
+    matchLabels:
+      app: simpleservice
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
