@@ -1,8 +1,10 @@
 from datetime import datetime
+
 from sqlalchemy import DateTime, Integer, String
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column
 
 Base = declarative_base()
+
 
 class RequestLog(Base):
     __tablename__ = "requests"

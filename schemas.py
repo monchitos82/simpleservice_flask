@@ -1,11 +1,12 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
-from datetime import datetime
+
 
 class RequestLogSchema(BaseModel):
-    model_config = ConfigDict(from_attributes=True) 
-    
+    model_config = ConfigDict(from_attributes=True)
+
     id: Optional[int] = None
     ip_address: str
     endpoint: str

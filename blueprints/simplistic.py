@@ -6,15 +6,14 @@ import uuid
 
 from flask import Blueprint, abort, current_app, jsonify, request
 from prometheus_client import Counter, Histogram, generate_latest
+from pydantic import ValidationError
 from redis import RedisError
+from sqlalchemy.exc import SQLAlchemyError
 
-from schemas import RequestLogSchema
 from models import RequestLog
+from schemas import RequestLogSchema
 from services import get_random
 from utils import fibonacci, get_now_time
-
-from pydantic import ValidationError
-from sqlalchemy.exc import SQLAlchemyError
 
 simplistic_bp = Blueprint("simplistic", __name__)
 log = logging.getLogger(__name__)
