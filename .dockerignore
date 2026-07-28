@@ -1,6 +1,13 @@
-.git
 Dockerfile
+*.pyc
+*.pyo
+*.pyd
+*.log
 .dockerignore
-.venv
-__pycache__
+.DS_Store
+.env
+.git
 .python*
+.venv
+__pycache__/
+venv/
