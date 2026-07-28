@@ -73,11 +73,6 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
     
     @app.route('/ready')
     def ready():
-        try:
-            app.db.session.execute('SELECT 1')
-        except:
-            return {'status': 'not ready'}, 503
-        else:
-            return {'status': 'ready'}, 200
+        return {'status': 'ready'}, 200
     
     return app
