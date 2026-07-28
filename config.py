@@ -28,7 +28,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = bool(
         os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS", False)
     )
-    USE_OTEL = env_as_bool("USE_OTEL")
+    USE_OTEL = env_as_bool("USE_OTEL", False)
 
 
 class DevelopmentConfig(Config):
@@ -38,7 +38,8 @@ class DevelopmentConfig(Config):
         "host": os.getenv("OTEL_SERVER", "host.containers.internal"),
         "port": os.getenv("OTEL_PORT", 6831),
         "traces": True,
-        "logging": True
+        "logging": True,
+        "metrics": True
 
     }
     REMOTE_RANDOM_URL = os.getenv(
