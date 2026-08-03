@@ -46,31 +46,37 @@ def setup_otel_instrumentation(app: Flask) -> None:
         app.logger.error(f"Instrumentation setup failed. Error: {error}")
 
 
-def setup_otel_logging(otel_settings: dict, app: Flask) -> None:
-    instance_id = os.getenv("POD_NAME", 1)
+def setup_otel_logging(otel_settings: dict, app: Flask) -> bool:
+    instance_id = os.getenv("POD_NAME", "1")
     resource = Resource.create(
         {
             "service.name": otel_settings["service_name"],
             "service.instance.id": f"{otel_settings['service_name']}-{instance_id}",
         }
     )
-    logger_provider = LoggerProvider(resource=resource)
-    set_logger_provider(logger_provider)
-
     exporter = OTLPLogExporter(
         endpoint=f"{otel_settings["host"]}:{otel_settings["port"]}", insecure=True
     )
+    logger_provider = LoggerProvider(resource=resource)
+    set_logger_provider(logger_provider)
+
 
     logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
     handler = LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
 
-    app.logger.addHandler(handler)
+    try:
+        app.logger.addHandler(handler)
+    except Exception:
+        app.logger.exception("Adding a handler for OTEL logging failed")
+        return False
+    return True
 
 
 def setup_otel_tracing(otel_settings: dict, app: Flask) -> trace.Tracer:
+    service_name = otel_settings["service_name"]
     resource = Resource.create(
         {
-            "service.name": otel_settings["service_name"],
+            "service.name": service_name,
             "service.instance.id": os.getenv("POD_NAME", "Undefined"),
             "k8s.pod.name": os.getenv("POD_NAME", "Undefined"),
             "k8s.namespace.name": os.getenv("POD_NAMESPACE", "Undefined"),
@@ -78,16 +84,16 @@ def setup_otel_tracing(otel_settings: dict, app: Flask) -> trace.Tracer:
             "k8s.node.name": os.getenv("NODE_NAME", "Undefined"),
         }
     )
-    trace.set_tracer_provider(TracerProvider(resource=resource))
-
     otlp_tracing_exporter = OTLPSpanExporter(
         endpoint=f"{otel_settings["host"]}:{otel_settings["port"]}",
         insecure=True,
     )
-    trace.get_tracer_provider().add_span_processor(
+    tracer_provider = TracerProvider(resource=resource)
+    tracer_provider.add_span_processor(
         SimpleSpanProcessor(otlp_tracing_exporter)
     )
-    return trace.get_tracer(otel_settings["service_name"])
+    trace.set_tracer_provider(tracer_provider)
+    return trace.get_tracer(service_name)
 
 
 def setup_otel_metrics(otel_settings: dict, app: Flask) -> metrics.Meter:

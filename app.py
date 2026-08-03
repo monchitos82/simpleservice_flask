@@ -43,7 +43,7 @@ def create_app(config_class: object = DevelopmentConfig) -> object:
     if use_otel:
         try:
             with app.app_context():
-                otel_settings = app.config.get("OTEL_SETTINGS")
+                otel_settings = app.config.get("OTEL_SETTINGS", {})
                 if otel_settings.get("traces", False):
                     app.trace = setup_otel_tracing(otel_settings, app)
 

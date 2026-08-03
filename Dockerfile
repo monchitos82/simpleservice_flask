@@ -20,7 +20,5 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/opt/simpleservice/.local/bin:$PATH"
 
 RUN uv sync --frozen
-RUN pwd
-RUN ls -la
 
 CMD ["/opt/simpleservice/entrypoint.sh"]
